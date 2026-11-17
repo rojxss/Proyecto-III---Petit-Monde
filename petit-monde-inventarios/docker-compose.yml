@@ -1,0 +1,15 @@
+# PostgreSQL local para que los tres trabajen con la misma version
+services:
+  db:
+    image: postgres:16
+    container_name: petit_monde_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-petit_monde}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

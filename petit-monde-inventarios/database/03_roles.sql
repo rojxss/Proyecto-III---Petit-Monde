@@ -1,0 +1,10 @@
+-- =====================================================================
+-- 03_roles.sql | Dueño: P2 (Seguridad) | Fase 2
+-- Solo CREA los roles (los GRANT van en 07_permisos.sql, cuando ya existen
+-- tablas y funciones). Así P2 no depende del avance de P1 ni P3 para escribir.
+-- =====================================================================
+-- TODO (P2):
+--   CREATE ROLE db_admin ...;
+--   CREATE ROLE inventory_manager ...;
+--   CREATE ROLE auditor ...;
+--   usuarios de ejemplo (LOGIN) y su pertenencia a roles, p. ej. gestor_norte, gestor_central.

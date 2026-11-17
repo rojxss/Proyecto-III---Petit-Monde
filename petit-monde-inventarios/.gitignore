@@ -1,0 +1,17 @@
+# Entorno
+.env
+*.local
+
+# Node
+node_modules/
+
+# Salidas generadas
+entrega/
+*.zip
+*.log
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

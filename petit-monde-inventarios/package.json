@@ -1,0 +1,14 @@
+{
+  "name": "petit-monde-inventarios",
+  "version": "1.0.0",
+  "description": "Proyecto III - Auditoría y rediseño de la base de datos de inventarios de Petit Monde (PostgreSQL)",
+  "private": true,
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "bash scripts/db-run.sh",
+    "db:psql": "bash scripts/db-run.sh --shell",
+    "db:build": "bash scripts/build-entrega.sh"
+  },
+  "license": "UNLICENSED"
+}
