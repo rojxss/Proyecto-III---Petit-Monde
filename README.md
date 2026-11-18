@@ -94,6 +94,6 @@ npm run db:build            # genera entrega/Proyecto3_PetitMonde.zip (.sql + PD
 
 | Persona | Nombre | Parte |
 |---|---|---|
-| P1 | _por completar_ | Modelo de datos y respaldos |
-| P2 | _por completar_ | Seguridad (RBAC + RLS) |
-| P3 | _por completar_ | Lógica de negocio (reportes + transacciones) |
+| P1 | Brandon Rojas | Modelo de datos y respaldos |
+| P2 | Matías Esquivel | Seguridad (RBAC + RLS) |
+| P3 | Juan José Morales | Lógica de negocio (reportes + transacciones) |
