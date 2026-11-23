@@ -68,3 +68,48 @@ Los valores están en GB.
 - Margen para picos: si en noviembre y diciembre los incrementales se duplicaran, el total del mes 12 subiría a 550.95 GB (55.1 %).
 - Bodega Norte necesita al menos 190 GB libres al mes 12 (2 × 49.6 + 74.4 + 15.75 = 189.35 GB sin compresión).
 - El disco externo necesita al menos 331.2 GB para guardar 12 completos mensuales hasta el mes 12.
+
+## Cumplimiento del RPO
+
+La pérdida máxima de datos es de unos 5 minutos (el `archive_timeout`) más lo que tarde la copia, que es menos de 1 minuto. Eso da unos 6 minutos, por debajo del límite de 15. El WAL se archiva en el servidor de respaldos, que es otra máquina, y llega casi en tiempo real a Bodega Norte.
+
+## Cumplimiento del RTO
+
+Estimación teórica para la caída total del servidor principal, con un disco de unos 100 MB por segundo y con margen sobre el tiempo de copia puro. Se confirma con las pruebas de restauración.
+
+| Paso | Mes 12 | Mes 24 |
+|---|---|---|
+| Preparar un servidor sustituto e instalar PostgreSQL (script automatizado) | 30 min | 30 min |
+| Restaurar el último completo (49.6 GB y 97.6 GB) | 15 min | 20 min |
+| Aplicar los incrementales (máximo 6) | 10 min | 15 min |
+| Reproducir el WAL desde el último incremental (máximo 1 día, 0.5 GB) | 10 min | 10 min |
+| Verificar datos: conteos, stock contra movimientos y transferencias en tránsito | 15 min | 15 min |
+| Reconectar aplicaciones y usuarios | 15 min | 15 min |
+| **Total** | **95 min** | **105 min** |
+
+Ambos totales quedan por debajo de los 120 minutos del RTO. Para mantener el margen en el mes 24, la restauración usa varios procesos en paralelo.
+
+## Pruebas de restauración
+
+- **Mensual:** el segundo domingo de cada mes, a las 4:00 a.m., se restaura el último completo con sus incrementales en un servidor de prueba. Se cronometra y se compara con el RTO.
+- **Trimestral:** simulacro de PITR hasta una hora exacta y simulacro de restauración desde la copia de Bodega Norte.
+- **Cada semana:** verificación automática de la integridad de los respaldos después de cada completo.
+- **Después de un apagón largo:** se revisa el registro de recuperación de PostgreSQL y se verifica el último respaldo.
+
+## Vinculación con la matriz de riesgos
+
+| Riesgo | Cómo lo cubre este plan |
+|---|---|
+| R-01 Corrupción de datos | Completo semanal, incrementales y WAL permiten PITR. La prevención (RAID y S.M.A.R.T.) se complementa con la verificación semanal de integridad. |
+| R-02 Pérdida de transacciones recientes | WAL archivado cada 5 minutos con escritura síncrona. Pérdida estimada de unos 6 minutos. |
+| R-03 Error humano | PITR al minuto anterior al error, incrementales de 14 días y completos mensuales. RBAC y RLS reducen la probabilidad de que ocurra. |
+| R-04 Saturación o fallo del almacenamiento de respaldos | Alerta al 70 %, compresión, purga automática y copias en Bodega Norte y en disco externo. |
+| R-05 Superar el RTO | Cadena corta de incrementales, scripts de despliegue automatizados y pruebas mensuales. Estimación de 95 a 105 minutos. |
+
+## Otras restricciones del negocio
+
+- **Apagones (mayo a noviembre):** UPS en el servidor de base de datos y en el de respaldos, escritura síncrona y WAL en disco separado. Al reiniciar, PostgreSQL se recupera solo con su WAL local.
+- **Transferencias en tránsito:** después de restaurar a un punto en el tiempo, se comparan las transferencias en estado `EN_TRANSITO` con la mercancía que físicamente va en camino antes de reabrir el sistema.
+- **Cierres de mes:** los reportes masivos corren en horario de oficina y los respaldos en la madrugada. Durante esos 4 días el incremental se mueve a las 2:00 a.m.
+- **Horas pico:** ningún respaldo ni copia pesada se programa de 12:00 m.d. a 2:00 p.m., de 5:00 p.m. a 7:00 p.m. ni los sábados por la mañana.
+- **Noviembre y diciembre:** el aumento de volumen ya está incluido en los cálculos del WAL.
