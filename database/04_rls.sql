@@ -24,3 +24,9 @@ insert into usuario_almacen (usuario, almacen_id) values
     ('gestor_regional', 2);
     ('operador_demo', 1);
 
+--cada usuario solo puede ver sus propias asginaciones a menos de que sea el admin que ve todas 
+alter table usuario_almacen enable row level security;
+create policy p_usuario_almacen_propio on usuario_almacen
+    for select to inventory_manager, operador
+    using (usuario = current_user);
+
