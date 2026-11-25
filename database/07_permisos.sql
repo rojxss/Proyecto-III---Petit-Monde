@@ -29,3 +29,14 @@ begin
 end $$;
 
 
+-- hay que denegar todo por defecto o sea no poder nada en public 
+
+revoke all on schema inventario from public;
+revoke all on all tables in schema inventario from public; 
+revoke all on all sequences in schema inventario from public;
+revoke all on all routines in schema inventario from public;
+
+-- el acceso al esquema 
+grant usage on schema inventario to inventory_manager, auditor, operador;
+
+
