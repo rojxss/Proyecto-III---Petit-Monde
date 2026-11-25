@@ -64,4 +64,20 @@ create policy p_detalle_asignado on detalle_venta
 create policy p_detalle_auditor on detalle_venta
     for select to auditor using (true);
 
+-- se necesitan las transferencias de almacenes 
+-- tienen 2 almacenes, el de origen y destino
+
+alter table transferencias enable row level security;
+create policy p_transf_ver on transferencias
+    for select to inventory_manager
+    using (almacen_origen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user)
+    or almacen_destino_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+create policy p_transf_crear on transferencias
+    for insert to inventory_manager
+    with check (almacen_origen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user)
+    and almacen_destino_id in (select ua.almacen_id from usuario_almacen au where ua.usuario= current_user))
+    with check (almacen_destino in (select ua.almacen_id from usuario_almacenau where ua.usuario = current_user))
+create policy p_tranf_auditor on transferencias
+    from select to auditor using (true);
+
     
