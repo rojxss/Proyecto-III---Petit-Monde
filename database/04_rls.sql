@@ -14,3 +14,13 @@ create table usuario_almacen (
     almacen_id in not null references almacenes(almacen_id),
     primary key (usuario, almacen_id)
 );
+comment on table usuario_almacen is 'Almacenes sobre los que cada usuario tiene autoridad';
+
+-- Asignación (1= almacén central, 2 = bodega norte)
+insert into usuario_almacen (usuario, almacen_id) values
+    ('gestor_central', 1),
+    ('gestor_norte', 2),
+    ('gestor_regional', 1),
+    ('gestor_regional', 2);
+    ('operador_demo', 1);
+
