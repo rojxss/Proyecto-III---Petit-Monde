@@ -29,6 +29,29 @@ end $$;
 
 -- Roles del grupo
 
--- vamos a crear el db_admin que administra estructura y usuarios pero no es un superusuario
+create role db_admin nologin
+    nosuperuser nocreatedb createrole noreplication bypassrls;
+
+create role inventory_manager nologin
+    nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
+
+create role auditor nologin
+    nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
+
+create role operador nologin
+    nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
+
+Grant inventory_manager, auditor, operador
+    to db_admin with admin option, inherit false, set false;
+
+-- creación de usuarios de ejemplo que estos si van a ocupar login 
+
+create role admin_demo login in role db_admin;
+create role gestor_central login in role inventory_manager;
+create role gestor_norte login in role inventory_manager;
+create role gestor_regional login in role inventory_manager;
+create role operador_demo login in role operador;
+create role auditor_demo login in role auditor;
+
 
 
