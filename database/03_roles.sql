@@ -8,17 +8,17 @@
 -- auditor: solo tiene permisos de lectura más reporte de rotación
 --operador: rol operativo sin permisos gerenciales ni analíticos (empleado)
 
-DO $$
+do $$
 declare r text;
 begin
     foreach r in array array [
         'admin_demo',
-        'aperador',
+        'operador',
         'operador_demo',
         'auditor_demo',
         'gestor_regional',
         'gestor_norte',
-        'gestor_central',
+        'gestor_central'
     ] loop
         if exists (select 1 from pg_roles where rolname = r) then
             execute format('drop owned by %I', r);
@@ -41,7 +41,7 @@ create role auditor nologin
 create role operador nologin
     nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
 
-Grant inventory_manager, auditor, operador
+grant inventory_manager, auditor, operador
     to db_admin with admin option, inherit false, set false;
 
 -- creación de usuarios de ejemplo que estos si van a ocupar login 
@@ -53,8 +53,8 @@ create role gestor_regional login in role inventory_manager;
 create role operador_demo login in role operador;
 create role auditor_demo login in role auditor;
 
-comment on role db_admin is 'Rol de administración de la base de datos, tiene todos los permisos y puede crear usuarios';
-comment on role inventory_manager is 'Gestor de inventario: lectura/inserción/actualiación de los almacenes';
-comment on role auditor is 'Auditor: solo lectura y reporte de rotación';
-comment on role operador is 'Operativo sin permisos gerenciales ni analíticos (empleado)';
+comment on role db_admin is 'rol de administración de la base de datos, tiene todos los permisos y puede crear usuarios';
+comment on role inventory_manager is 'gestor de inventario: lectura/inserción/actualización de sus almacenes';
+comment on role auditor is 'auditor: solo lectura y reporte de rotación';
+comment on role operador is 'operativo sin permisos gerenciales ni analíticos (empleado)';
 
