@@ -47,3 +47,21 @@ create policy p_mov_asignado on movimientos_inventario
     with check(almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
 create policy p_mov_auditor on movimientos_inventario
     from select to auditor using (true);
+
+alter table ventas enable row level security;
+create policy p_ventas_asignado on ventas
+    for all to inventory_manager, operador
+    using (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user))
+    with check (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+create policy p_ventas_auditor on ventas
+    from select to auditor using  (true);
+
+alter table detalle_venta enable row level security;
+create policy p_detalle_asignado on detalle_venta
+    for all to inventory_manager, operador
+    using (exists(select 1 from ventas v where v.venta_id = detalle_venta.venta_id))
+    with check (exists(select 1 from ventas v where v.venta_id = detalle_venta.venta_id));
+create policy p_detalle_auditor on detalle_venta
+    for select to auditor using (true);
+
+    
