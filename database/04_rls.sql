@@ -10,18 +10,18 @@ SET search_path = inventario, public;
 
 -- Tablas para la asignación usuario con los almacenes 
 create table usuario_almacen (
-    usuario varchar(50) not null, 
-    almacen_id in not null references almacenes(almacen_id),
+    usuario varchar(50) not null,
+    almacen_id int not null references almacenes(almacen_id),
     primary key (usuario, almacen_id)
 );
-comment on table usuario_almacen is 'Almacenes sobre los que cada usuario tiene autoridad';
+comment on table usuario_almacen is 'almacenes sobre los que cada usuario tiene autoridad';
 
 -- Asignación (1= almacén central, 2 = bodega norte)
 insert into usuario_almacen (usuario, almacen_id) values
     ('gestor_central', 1),
     ('gestor_norte', 2),
     ('gestor_regional', 1),
-    ('gestor_regional', 2);
+    ('gestor_regional', 2),
     ('operador_demo', 1);
 
 --cada usuario solo puede ver sus propias asginaciones a menos de que sea el admin que ve todas 
@@ -35,8 +35,8 @@ create policy p_usuario_almacen_propio on usuario_almacen
 alter table stock_almacen enable row level security;
 create policy p_stock_asignado on stock_almacen
     for all to inventory_manager, operador
-    using (almacen_id IN (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user))
-    with check (almacen_id IN (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+    using (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user))
+    with check (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
 create policy p_stock_auditor on stock_almacen
     for select to auditor using (true);
 
@@ -44,9 +44,9 @@ alter table movimientos_inventario enable row level security;
 create policy p_mov_asignado on movimientos_inventario
     for all to inventory_manager, operador
     using (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user))
-    with check(almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+    with check (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
 create policy p_mov_auditor on movimientos_inventario
-    from select to auditor using (true);
+    for select to auditor using (true);
 
 alter table ventas enable row level security;
 create policy p_ventas_asignado on ventas
@@ -54,13 +54,13 @@ create policy p_ventas_asignado on ventas
     using (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user))
     with check (almacen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
 create policy p_ventas_auditor on ventas
-    from select to auditor using  (true);
+    for select to auditor using (true);
 
 alter table detalle_venta enable row level security;
 create policy p_detalle_asignado on detalle_venta
     for all to inventory_manager, operador
-    using (exists(select 1 from ventas v where v.venta_id = detalle_venta.venta_id))
-    with check (exists(select 1 from ventas v where v.venta_id = detalle_venta.venta_id));
+    using (exists (select 1 from ventas v where v.venta_id = detalle_venta.venta_id))
+    with check (exists (select 1 from ventas v where v.venta_id = detalle_venta.venta_id));
 create policy p_detalle_auditor on detalle_venta
     for select to auditor using (true);
 
@@ -71,13 +71,17 @@ alter table transferencias enable row level security;
 create policy p_transf_ver on transferencias
     for select to inventory_manager
     using (almacen_origen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user)
-    or almacen_destino_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+        or almacen_destino_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
 create policy p_transf_crear on transferencias
     for insert to inventory_manager
     with check (almacen_origen_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user)
-    and almacen_destino_id in (select ua.almacen_id from usuario_almacen au where ua.usuario= current_user))
-    with check (almacen_destino in (select ua.almacen_id from usuario_almacenau where ua.usuario = current_user))
-create policy p_tranf_auditor on transferencias
-    from select to auditor using (true);
+        and almacen_destino_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+create policy p_transf_recibir on transferencias
+    for update to inventory_manager
+    using (almacen_destino_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user))
+    with check (almacen_destino_id in (select ua.almacen_id from usuario_almacen ua where ua.usuario = current_user));
+create policy p_transf_auditor on transferencias
+    for select to auditor using (true);
+
 
     
