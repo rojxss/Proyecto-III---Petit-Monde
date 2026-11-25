@@ -1,15 +1,31 @@
--- =====================================================================
--- 07_permisos.sql | Dueño: P2 (Seguridad) | Fase 2 (GRANT/REVOKE)
--- Se ejecuta DESPUÉS de crear tablas y funciones.
--- Principio de mínimo privilegio: denegar por defecto, otorgar lo necesario.
--- =====================================================================
+--Dueño: Matias Esquivel Lizano 
 SET search_path = inventario, public;
 
--- TODO (P2):
---   REVOKE ALL ON SCHEMA/TABLES/FUNCTIONS ... FROM PUBLIC;
---   REVOKE EXECUTE ON FUNCTION ... FROM PUBLIC;   -- ¡por defecto PUBLIC puede ejecutar!
---   GRANT por rol según docs/p2-seguridad/matriz-rbac.md
---     reportes valoración  -> db_admin, inventory_manager
---     reporte rotación     -> db_admin, inventory_manager, auditor
---     venta                -> inventory_manager, db_admin
---     transferencia        -> inventory_manager, db_admin
+alter schema inventario owner to bd_admin;
+
+do $$
+declare o record; 
+begin 
+    for o in select c.oid::regclass as nombre, c.relkind
+        from pg_class c 
+        join pg_namespace n on n.oid = c.relkind 
+        where n.nspname = 'inventario' and c.relkind in ('r', 'v', 'm', 'S')
+            and not exists (select 1 from pg_depend d where d.objid = c.oid and d.deptype in ('a', 'i'))
+    loop 
+        execute format ('alter %s %s owner to bd_admin', 
+            case o.relkind  
+                when 'v' then 'view' 
+                when 'm' then 'materialized view' 
+                when 'S' then 'sequence' 
+                else 'table' end, o.nombre);
+    end loop;
+
+    for o in select p.oid::regprocedure as firma
+        from pg_proc p join pg_namespace n on n.oid = pronamespace
+        where n.nspname = 'inventario' 
+    loop
+        execute format ('alter routine %s owner to db_admin', o.firma);
+    end loop;
+end $$;
+
+
