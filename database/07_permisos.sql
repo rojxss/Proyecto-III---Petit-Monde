@@ -1,7 +1,7 @@
 --Dueño: Matias Esquivel Lizano 
 SET search_path = inventario, public;
 
-alter schema inventario owner to bd_admin;
+alter schema inventario owner to db_admin;
 
 do $$
 declare o record;
