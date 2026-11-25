@@ -53,5 +53,8 @@ create role gestor_regional login in role inventory_manager;
 create role operador_demo login in role operador;
 create role auditor_demo login in role auditor;
 
-
+comment on role db_admin is 'Rol de administración de la base de datos, tiene todos los permisos y puede crear usuarios';
+comment on role inventory_manager is 'Gestor de inventario: lectura/inserción/actualiación de los almacenes';
+comment on role auditor is 'Auditor: solo lectura y reporte de rotación';
+comment on role operador is 'Operativo sin permisos gerenciales ni analíticos (empleado)';
 
