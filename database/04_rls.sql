@@ -1,15 +1,16 @@
--- =====================================================================
--- 04_rls.sql | Dueño: P2 (Seguridad) | Fase 3
--- Row-Level Security por almacén.
--- Mecanismo definido en docs/contrato-esquema.md (decisión #6):
---   tabla inventario.usuario_almacen (usuario, almacen_id)  y/o
---   current_setting('app.almacen_id').
--- Recordar: USING y WITH CHECK; las funciones deben ser SECURITY INVOKER.
--- =====================================================================
+-- Row-level security // Dueño: Matías Esquivel 
+-- Fase 3 del proyecto 
+
+-- Lo que ve cada rol: 
+-- db_admin: todo
+-- inventory_manager: solo los almacenes que se asginan en usuario_almacen
+-- operador: solo los alacenes asignados
+-- auditor: todo, pero solo lectura
 SET search_path = inventario, public;
 
--- TODO (P2):
---   CREATE TABLE usuario_almacen (...);
---   ALTER TABLE ... ENABLE ROW LEVEL SECURITY;
---   CREATE POLICY ... ON stock_almacen / movimientos_inventario / ventas / transferencias ...
---   db_admin: bypass autorizado (BYPASSRLS o política permisiva).
+-- Tablas para la asignación usuario con los almacenes 
+create table usuario_almacen (
+    usuario varchar(50) not null, 
+    almacen_id in not null references almacenes(almacen_id),
+    primary key (usuario, almacen_id)
+);
