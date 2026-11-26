@@ -35,7 +35,10 @@ RESET ROLE;
 -- Objetivo: Ejecutar sp_reporte_valoracion_reabastecimiento(1, 10.0)
 -- ---------------------------------------------------------------------
 DO $$ BEGIN RAISE NOTICE '>>> PRUEBA 4: Ejecutar sp_reporte_valoracion_reabastecimiento(1, 10.0)'; END $$;
--- TODO: SET ROLE ...; ejecutar; RESET ROLE;
+SET ROLE db_admin;
+-- Deberían salir el escritorio como Agotado y el teclado como Crítico arriba de la lista
+SELECT * FROM sp_reporte_valoracion_reabastecimiento(1, 10.0);
+RESET ROLE;
 
 -- ---------------------------------------------------------------------
 -- PRUEBA 5 | Rol: db_admin
@@ -112,11 +115,23 @@ RESET ROLE;
 -- Objetivo: Ejecutar sp_reporte_rotacion_inventario sin restricciones de permisos
 -- ---------------------------------------------------------------------
 DO $$ BEGIN RAISE NOTICE '>>> PRUEBA 13: Ejecutar sp_reporte_rotacion_inventario sin restricciones de permisos'; END $$;
--- TODO: SET ROLE ...; ejecutar; RESET ROLE;
+SET ROLE auditor;
+-- Primer trimestre de 2026, categoría Electrónica (incluye monitores y periféricos)
+SELECT * FROM sp_reporte_rotacion_inventario('2026-01-01', '2026-03-31', 2);
+RESET ROLE;
 
 -- ---------------------------------------------------------------------
 -- PRUEBA 14 | Rol: auditor
 -- Objetivo: Rango de fechas inválido -> error controlado con mensaje del enunciado
 -- ---------------------------------------------------------------------
 DO $$ BEGIN RAISE NOTICE '>>> PRUEBA 14: Rango de fechas inválido -> error controlado con mensaje del enunciado'; END $$;
--- TODO: SET ROLE ...; ejecutar; RESET ROLE;
+SET ROLE auditor;
+-- Se atrapa el error para que el script siga, pero se muestra el mensaje tal cual
+DO $$
+BEGIN
+    PERFORM * FROM sp_reporte_rotacion_inventario('2026-05-01', '2026-01-01', NULL);
+    RAISE NOTICE 'Prueba 14: el reporte corrió y no debía.';
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'Prueba 14: ERROR: %', SQLERRM;
+END $$;
+RESET ROLE;
