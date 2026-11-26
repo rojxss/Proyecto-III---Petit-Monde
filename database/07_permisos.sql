@@ -1,15 +1,87 @@
--- =====================================================================
--- 07_permisos.sql | Dueño: P2 (Seguridad) | Fase 2 (GRANT/REVOKE)
--- Se ejecuta DESPUÉS de crear tablas y funciones.
--- Principio de mínimo privilegio: denegar por defecto, otorgar lo necesario.
--- =====================================================================
+--Dueño: Matias Esquivel Lizano 
 SET search_path = inventario, public;
 
--- TODO (P2):
---   REVOKE ALL ON SCHEMA/TABLES/FUNCTIONS ... FROM PUBLIC;
---   REVOKE EXECUTE ON FUNCTION ... FROM PUBLIC;   -- ¡por defecto PUBLIC puede ejecutar!
---   GRANT por rol según docs/p2-seguridad/matriz-rbac.md
---     reportes valoración  -> db_admin, inventory_manager
---     reporte rotación     -> db_admin, inventory_manager, auditor
---     venta                -> inventory_manager, db_admin
---     transferencia        -> inventory_manager, db_admin
+alter schema inventario owner to db_admin;
+
+do $$
+declare o record;
+begin
+    for o in select c.oid::regclass as nombre, c.relkind
+        from pg_class c
+        join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'inventario' and c.relkind in ('r', 'v', 'm', 'S')
+            and not exists (select 1 from pg_depend d where d.objid = c.oid and d.deptype in ('a', 'i'))
+    loop
+        execute format ('alter %s %s owner to db_admin',
+            case o.relkind
+                when 'v' then 'view'
+                when 'm' then 'materialized view'
+                when 'S' then 'sequence'
+                else 'table' end, o.nombre);
+    end loop;
+
+    for o in select p.oid::regprocedure as firma
+        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'inventario'
+    loop
+        execute format ('alter routine %s owner to db_admin', o.firma);
+    end loop;
+end $$;
+
+
+-- hay que denegar todo por defecto o sea no poder nada en public 
+
+revoke all on schema inventario from public;
+revoke all on all tables in schema inventario from public;
+revoke all on all sequences in schema inventario from public;
+revoke all on all routines in schema inventario from public;
+
+-- el acceso al esquema 
+grant usage on schema inventario to inventory_manager, auditor, operador;
+
+-- inventory_manager: lectura, inserción y actualización pero nunca delete 
+grant select on categorias, proveedores, almacenes, productos, stock_almacen, ventas, detalle_venta, transferencias, movimientos_inventario, usuario_almacen
+to inventory_manager;
+
+grant insert, update on productos, stock_almacen to inventory_manager;
+
+grant insert on ventas, detalle_venta, transferencias, movimientos_inventario to inventory_manager;
+
+grant update (estado, fecha_recepcion) on transferencias to inventory_manager;
+
+-- auditor: solo lectura
+grant select on categorias, proveedores, almacenes, productos, stock_almacen, ventas, detalle_venta, transferencias, movimientos_inventario
+to auditor;
+
+-- operador: empleado operativo 
+grant select on categorias, almacenes, productos, stock_almacen, usuario_almacen
+to operador;
+
+do $$
+declare
+    r record;
+    f record;
+    hallada boolean;
+begin
+    for r in select * from (values
+        ('sp_reporte_valoracion_reabastecimiento', 'inventory_manager'),
+        ('sp_reporte_rotacion_inventario', 'inventory_manager'),
+        ('sp_reporte_rotacion_inventario', 'auditor'),
+        ('sp_procesar_venta', 'inventory_manager'),
+        ('sp_transferir_inventario', 'inventory_manager')
+    ) as t (rutina, rol)
+    loop
+        hallada := false;
+        for f in select p.oid::regprocedure as firma
+            from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+            where n.nspname = 'inventario' and p.proname = r.rutina
+        loop
+            hallada := true;
+            execute format ('grant execute on routine %s to %I', f.firma, r.rol);
+        end loop;
+        if not hallada then
+            raise warning 'no se encontró la rutina % (pendiente de la persona 3)', r.rutina;
+        end if;
+    end loop;
+end $$;
+
