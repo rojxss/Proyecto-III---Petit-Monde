@@ -35,8 +35,8 @@
 ```sql
 sp_reporte_valoracion_reabastecimiento(p_almacen_id INT, p_margen_alerta NUMERIC)
 sp_reporte_rotacion_inventario(p_fecha_inicio DATE, p_fecha_fin DATE, p_categoria_id INT)
-sp_procesar_venta(...)          -- P3 define los parámetros y los anota aquí
-sp_transferir_inventario(...)   -- P3 define los parámetros y los anota aquí
+sp_procesar_venta(p_almacen_id INT, p_cliente VARCHAR, p_productos INT[], p_cantidades INT[])  -- devuelve INT (venta_id)
+sp_transferir_inventario(p_origen_id INT, p_destino_id INT, p_producto_id INT, p_cantidad INT)   -- devuelve INT (transferencia_id)
 ```
 
 ## Notas sobre el enunciado
