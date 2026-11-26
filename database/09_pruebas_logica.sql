@@ -42,14 +42,47 @@ DO $$ BEGIN RAISE NOTICE '>>> PRUEBA 4: Ejecutar sp_reporte_valoracion_reabastec
 -- Objetivo: Transferir 5 unidades del almacén 1 al 2 -> COMMIT, doble movimiento
 -- ---------------------------------------------------------------------
 DO $$ BEGIN RAISE NOTICE '>>> PRUEBA 5: Transferir 5 unidades del almacén 1 al 2 -> COMMIT, doble movimiento'; END $$;
--- TODO: SET ROLE ...; ejecutar; RESET ROLE;
+SET ROLE db_admin;
+
+SELECT almacen_id, cantidad FROM stock_almacen WHERE producto_id = 1 ORDER BY almacen_id;
+
+-- Se mueven 5 monitores de Almacén Central a Bodega Norte
+BEGIN;
+SELECT sp_transferir_inventario(1, 2, 1, 5) AS transferencia_creada;
+COMMIT;
+
+-- El central baja 5, la bodega norte aparece con 5 (antes no tenía monitores)
+SELECT almacen_id, cantidad FROM stock_almacen WHERE producto_id = 1 ORDER BY almacen_id;
+
+-- Tienen que salir dos movimientos: la SALIDA del 1 y la ENTRADA del 2
+SELECT m.transferencia_id, m.almacen_id, m.tipo, m.cantidad
+FROM movimientos_inventario m
+WHERE m.transferencia_id = (SELECT MAX(t.transferencia_id) FROM transferencias t)
+ORDER BY m.movimiento_id;
+RESET ROLE;
 
 -- ---------------------------------------------------------------------
 -- PRUEBA 6 | Rol: db_admin
 -- Objetivo: Transferir 5000 unidades -> ROLLBACK, inventario intacto
 -- ---------------------------------------------------------------------
 DO $$ BEGIN RAISE NOTICE '>>> PRUEBA 6: Transferir 5000 unidades -> ROLLBACK, inventario intacto'; END $$;
--- TODO: SET ROLE ...; ejecutar; RESET ROLE;
+SET ROLE db_admin;
+
+SELECT almacen_id, cantidad FROM stock_almacen WHERE producto_id = 1 ORDER BY almacen_id;
+SELECT COUNT(*) AS transferencias_antes FROM transferencias;
+
+DO $$
+BEGIN
+    PERFORM sp_transferir_inventario(1, 2, 1, 5000);
+    RAISE NOTICE 'Prueba 6: la transferencia pasó y no debía pasar.';
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'Prueba 6: la transferencia se canceló como se esperaba -> %', SQLERRM;
+END $$;
+
+-- Nada cambió: mismas cantidades y la misma cantidad de transferencias
+SELECT almacen_id, cantidad FROM stock_almacen WHERE producto_id = 1 ORDER BY almacen_id;
+SELECT COUNT(*) AS transferencias_despues FROM transferencias;
+RESET ROLE;
 
 -- ---------------------------------------------------------------------
 -- PRUEBA 9 | Rol: inventory_manager
