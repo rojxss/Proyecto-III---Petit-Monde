@@ -7,14 +7,14 @@ Detalle completo de dependencias: `docs/referencia/Proyecto_III_Division_y_Depen
 **Archivos SQL:** `01_esquema.sql`, `02_datos.sql`
 **Documentación:** `docs/p1-modelo/`
 
-- [ ] Auditoría de anomalías de actualización, inserción y borrado
-- [ ] Normalización a 3FNBC (justificación paso a paso)
-- [ ] DER definitivo
-- [ ] DDL con PK, FK, CHECK, UNIQUE, NOT NULL y tipos óptimos
-- [ ] Incluir `stock_optimo` (no viene en el Anexo 1) y estado de transferencia (`EN_TRANSITO`/`RECIBIDA`)
-- [ ] Datos de prueba que cumplan los requisitos listados en `02_datos.sql`
-- [ ] Cuadro de recuperación y respaldos (Full, incrementales, WAL, ubicación) con cálculos contra el límite de 1 TB y sin nube
-- [ ] Documento de normalización + cuadro de recuperación
+- [x] Auditoría de anomalías de actualización, inserción y borrado
+- [x] Normalización a 3FNBC (justificación paso a paso)
+- [x] DER definitivo
+- [x] DDL con PK, FK, CHECK, UNIQUE, NOT NULL y tipos óptimos
+- [x] Incluir `stock_optimo` (no viene en el Anexo 1) y estado de transferencia (`EN_TRANSITO`/`RECIBIDA`)
+- [x] Datos de prueba que cumplan los requisitos listados en `02_datos.sql`
+- [x] Cuadro de recuperación y respaldos (Full, incrementales, WAL, ubicación) con cálculos contra el límite de 1 TB y sin nube
+- [x] Documento de normalización + cuadro de recuperación
 
 ## P2 – Seguridad (Fases 2 y 3)
 
